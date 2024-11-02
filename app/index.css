@@ -6,6 +6,7 @@
 
 body {
     max-width: 100%;
+    background-color: #F7F7FC;
 }
 
 * {
@@ -36,6 +37,15 @@ body {
         @apply text-title_sm2
     }
 }
+
+/* styles/globals.css */
+.dashed-long {
+    border: 2px dashed gray; /* Use the same border properties as Tailwind */
+    border-image: linear-gradient(90deg, transparent 25%, gray 25%, gray 75%, transparent 75%) 1;
+    border-image-slice: 1; /* Adjust the dash length */
+}
+
+
 
 .slick-slide > div {
     margin: 0 10px;
