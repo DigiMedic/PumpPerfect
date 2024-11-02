@@ -19,7 +19,6 @@ const FileUploader = ({onUploadStatus}) => {
     };
 
     const {getRootProps, getInputProps} = useDropzone({
-
         onDrop: async (acceptedFiles) => {
 
             console.log('Reading files ....');
@@ -51,21 +50,29 @@ const FileUploader = ({onUploadStatus}) => {
 
 
     const handleUpload = async () => {
-        const uploadResult = await uploadFiles(csv_dict);
-        setUploadedFiles(uploadResult);
-        onUploadStatus('finished', uploadResult); // Notify that upload has finished
+        const uploadResult = await uploadFiles();
+        // setUploadedFiles(uploadResult);
+        // onUploadStatus('finished', uploadResult); // Notify that upload has finished
+        console.log(uploadResult)
         setSelectedFiles([]); // Clear selected files after upload
     };
 
-    const uploadFiles = async (csvData) => {
+    const uploadFiles = async () => {
         onUploadStatus('uploading'); // Notify that upload has started
+        const formData = new FormData();
+        for (const key in csv_dict) {
+            csv_dict[key].forEach(file => {
+                formData.append(key, file); // Append each file to the FormData object
+            });
+        }
         try {
             console.log('Uploading files ...')
             const response = await fetch('http://localhost:5000/post_data', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({csvData: csvData}),
+                body: JSON.stringify({csvData: formData}),
             });
+
 
             if (response.ok) {
                 console.log('Uploading successful ...')

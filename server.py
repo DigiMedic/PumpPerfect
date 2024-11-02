@@ -29,28 +29,33 @@ def PlotImage(df):
 def post_data():
     # Define the expected keys for the uploaded files
     expected_keys = ['basal', 'bolus', 'insulin', 'alarms', 'bg', 'cgm']
-    csv_dict = {}
+    csv_dict = {key: [] for key in expected_keys}  # Initialize dict with empty lists
 
     # Check for uploaded files
+    print(f'file_contensssss{request.files}')
+
     for key in expected_keys:
         if key in request.files:
-            file = request.files[key]
+            file_list = request.files.getlist(key)  # Use getlist to handle multiple files
 
-            # Check if the file is not empty
-            if file.filename == '':
-                return jsonify({'error': f'No file selected for {key}'}), 400
+            for file in file_list:
+                # Check if the file is not empty
+                if file.filename == '':
+                    return jsonify({'error': f'No file selected for {key}'}), 400
 
-            # Read the file content into a DataFrame
-            try:
-                file_content = file.stream.read().decode("utf-8")
-                df = pd.read_csv(StringIO(file_content), skiprows=1)
-                csv_dict[key] = df  # Store the DataFrame in the dictionary
+                # Read the file content into a DataFrame
+                try:
+                    file_content = file.stream.read().decode("utf-8")
+                    print(f'file_content {file_content}')
+                    df = pd.read_csv(StringIO(file_content), skiprows=1)
+                    csv_dict[key].append(df.to_dict(orient='records'))  # Append the DataFrame's dictionary to the list
 
-            except Exception as e:
-                return jsonify({'error': f'Error processing file {key}: {str(e)}'}), 500
+                except Exception as e:
+                    return jsonify({'error': f'Error processing file {key}: {str(e)}'}), 500
 
-    csv_dict = jsonify({key: df.to_dict(orient='records') for key, df in csv_dict.items()})
-    process_csv(csv_dict)
+    data = jsonify(csv_dict)
+    # process_csv(data)
+    return jsonify(csv_dict)  # Return the dictionary of DataFrames
 
     # Return the dictionary with DataFrames converted to JSON
     # return jsonify({key: df.to_dict(orient='records') for key, df in csv_dict.items()})
