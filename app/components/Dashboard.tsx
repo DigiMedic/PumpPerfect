@@ -23,7 +23,18 @@ export default function Dashboard() {
     const [processedData, setProcessedData] = useState<ProcessedData | null>(null);
 
     // Function to handle upload status
-    const handleUploadStatus = (status: string, data?: ServerResponse) => {
+    const handleUploadStatus = (status: string, data?: {
+        message: string;
+        processed_data?: {
+            basal: Record<string, unknown>[];
+            bolus: Record<string, unknown>[];
+            insulin: Record<string, unknown>[];
+            alarms: Record<string, unknown>[];
+            bg: Record<string, unknown>[];
+            cgm: Record<string, unknown>[];
+        };
+        error?: string;
+    }) => {
         if (status === 'uploading') {
             setUploadMessage('Uploading files...');
         } else if (status === 'finished' && data) {
