@@ -9,44 +9,71 @@ const FileUploader = ({onUploadStatus}) => {
     const [selectedFiles, setSelectedFiles] = useState([]);
     const [uploadedFiles, setUploadedFiles] = useState([]);
 
-    const csv_dict: { [key: string]: string[] } = {
+    const [csv_dict, setCsvDict] = useState({
         basal: [],
         bolus: [],
         insulin: [],
         alarms: [],
         bg: [],
-        cgm: [],
-    };
+        cgm: []
+    });
 
-    const {getRootProps, getInputProps} = useDropzone({
-        onDrop: async (acceptedFiles) => {
+    const { getRootProps, getInputProps } = useDropzone({
+    onDrop: async (acceptedFiles) => {
+        console.log('Reading files ....');
+        // Loop through acceptedFiles and filter out unwanted files
+        const filteredFiles = acceptedFiles.filter(file =>
+            file.name !== "alarms_data_1.csv" && file.name !== "bg_data_1.csv" && file.name !== ".DS_Store"
+        );
 
-            console.log('Reading files ....');
-            // Loop through acceptedFiles and filter out unwanted files
-            const filteredFiles = acceptedFiles.filter(file =>
-                file.name !== "alarms_data_1.csv" && file.name !== "bg_data_1.csv" && file.name !== ".DS_Store"
-            );
+        // Initialize an object to store the content
+        const fileContents = {};
 
+        // Create a promise for reading all the filtered files
+        const fileReadPromises = filteredFiles.map(file => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const content = event.target.result; // This is the content of the file
+                    fileContents[file.name] = content; // Store content using the file name as key
+                    resolve();
+                };
+                reader.onerror = (error) => {
+                    reject(error);
+                };
+                reader.readAsText(file); // Read the file as text
+            });
+        });
+
+        // Wait for all files to be read
+        try {
+            await Promise.all(fileReadPromises);
             setSelectedFiles(filteredFiles);
+
+            const updatedCsvDict = { ...csv_dict };
 
             filteredFiles.forEach(file => {
                 const fileName = file.name.split('.')[0]; // Remove the extension
                 const [prefix] = fileName.split('_'); // Get the prefix (e.g., 'basal', 'bolus', 'cgm')
 
                 // Check if the prefix is one of the expected keys
-                if (csv_dict.hasOwnProperty(prefix)) {
-                    // Add the file to the corresponding array in csv_dict
-                    csv_dict[prefix].push(file);
-                    console.log(`Accepted file: ${file}`);
+                if (updatedCsvDict.hasOwnProperty(prefix)) {
+                    // Store the content instead of the file object
+                    updatedCsvDict[prefix].push(fileContents[file.name]);
+                    console.log(`Accepted file: ${file.name}`);
                 } else {
-                    console.log(`Ignored file: ${file}`); // For files that do not match any expected key
+                    console.log(`Ignored file: ${file.name}`); // For files that do not match any expected key
                 }
             });
 
+            setCsvDict(updatedCsvDict);
             console.log('All files read.');
+        } catch (error) {
+            console.error('Error reading files:', error);
+        }
+    },
+});
 
-        },
-    });
 
 
     const handleUpload = async () => {
@@ -59,18 +86,25 @@ const FileUploader = ({onUploadStatus}) => {
 
     const uploadFiles = async () => {
         onUploadStatus('uploading'); // Notify that upload has started
-        const formData = new FormData();
-        for (const key in csv_dict) {
-            csv_dict[key].forEach(file => {
-                formData.append(key, file); // Append each file to the FormData object
-            });
-        }
+        const formData = {};
+
+        // for (const [key, files] of Object.entries(csv_dict)) {
+        //     formData[key] = [];
+        //
+        //     for (const file of files) {
+        //         // const fileContent = await fileToBase64(file);
+        //         formData[key].push(file);
+        //     }
+        // }
+
+
         try {
+            // console.log("Form data to be sent:", csv_dict);
             console.log('Uploading files ...')
             const response = await fetch('http://localhost:5000/post_data', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({csvData: formData}),
+                body: JSON.stringify({csvData: csv_dict}),
             });
 
 
@@ -93,6 +127,15 @@ const FileUploader = ({onUploadStatus}) => {
             throw new Error(`Upload failed: `);
         }
 
+    };
+
+    const fileToBase64 = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = (error) => reject(error);
+        });
     };
 
     return (
