@@ -9,11 +9,11 @@ import DashboardTitle from "@/app/components/DashboardTitle";
 export default function SetupPage() {
 
     return (
-        <div>
+        <div className="flex flex-col h-screen">
             <NavBar/>
-            <div className={'flex flex-row h-full fixed mt-[4.8rem] w-screen'}>
+            <div className="flex flex-1 overflow-hidden">
                 <SideBar/>
-                <div className={'flex-1'}>
+                <div className="flex-1 overflow-y-auto">
                     <DashboardTitle/>
                     <Dashboard/>
                 </div>
