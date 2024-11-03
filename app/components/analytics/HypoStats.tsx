@@ -1,7 +1,7 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertTriangle } from "lucide-react";
 import { HypoEvent } from '@/lib/analytics';
-import { AlertTriangle, Clock } from 'lucide-react';
 
 interface HypoStatsProps {
     events: HypoEvent[];
@@ -9,8 +9,12 @@ interface HypoStatsProps {
     afterBolus: number;
 }
 
-export const HypoStats: React.FC<HypoStatsProps> = ({ events, totalEvents, afterBolus }) => {
-    const percentageAfterBolus = (afterBolus / totalEvents * 100).toFixed(1);
+export const HypoStats: React.FC<HypoStatsProps> = ({
+    events,
+    totalEvents,
+    afterBolus
+}) => {
+    const percentageAfterBolus = ((afterBolus / totalEvents) * 100).toFixed(1);
 
     return (
         <Card>
@@ -19,9 +23,6 @@ export const HypoStats: React.FC<HypoStatsProps> = ({ events, totalEvents, after
                     <AlertTriangle className="h-5 w-5 text-red-500" />
                     <CardTitle>Hypoglykémie</CardTitle>
                 </div>
-                <CardDescription>
-                    {percentageAfterBolus}% hypoglykémií souvisí s bolusem
-                </CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="space-y-4">
@@ -30,7 +31,7 @@ export const HypoStats: React.FC<HypoStatsProps> = ({ events, totalEvents, after
                         <span className="font-bold">{totalEvents}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                        <span>Po bolusu</span>
+                        <span>Po bolusu ({percentageAfterBolus}%)</span>
                         <span className="font-bold">{afterBolus}</span>
                     </div>
                     <div className="flex justify-between items-center">

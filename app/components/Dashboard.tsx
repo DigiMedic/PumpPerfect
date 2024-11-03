@@ -1,48 +1,19 @@
 import { useState } from "react";
-import FileUploader from "@/app/components/FileUploader";
-import PythonData from "@/app/components/PythonData";
-
-// Definice typů pro data
-interface ProcessedData {
-    basal: Record<string, unknown>[];
-    bolus: Record<string, unknown>[];
-    insulin: Record<string, unknown>[];
-    alarms: Record<string, unknown>[];
-    bg: Record<string, unknown>[];
-    cgm: Record<string, unknown>[];
-}
-
-interface ServerResponse {
-    message: string;
-    processed_data?: ProcessedData;
-    error?: string;
-}
+import FileUploader from "./FileUploader";
+import PythonData from "./PythonData";
+import { ProcessedData } from "@/types";
+import type { ServerResponse } from "./FileUploader";
 
 export default function Dashboard() {
     const [uploadMessage, setUploadMessage] = useState<string>('');
     const [processedData, setProcessedData] = useState<ProcessedData | null>(null);
 
-    // Function to handle upload status
-    const handleUploadStatus = (status: string, data?: {
-        message: string;
-        processed_data?: {
-            basal: Record<string, unknown>[];
-            bolus: Record<string, unknown>[];
-            insulin: Record<string, unknown>[];
-            alarms: Record<string, unknown>[];
-            bg: Record<string, unknown>[];
-            cgm: Record<string, unknown>[];
-        };
-        error?: string;
-    }) => {
+    const handleUploadStatus = (status: string, data?: ServerResponse) => {
         if (status === 'uploading') {
             setUploadMessage('Uploading files...');
-        } else if (status === 'finished' && data) {
+        } else if (status === 'finished' && data?.processed_data) {
             setUploadMessage('Upload successful');
-            if (data.processed_data) {
-                setProcessedData(data.processed_data);
-                console.log('Processed data:', data.processed_data);
-            }
+            setProcessedData(data.processed_data);
         } else if (status === 'error') {
             setUploadMessage(`Upload error: ${data?.error || 'Unknown error'}`);
             setProcessedData(null);

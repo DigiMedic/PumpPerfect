@@ -1,17 +1,9 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-
-interface Statistics {
-    avgGlucose: number;
-    hypoEvents: number;
-    timeInRange: number;
-    medianBasal: number;
-    medianBolus: number;
-    hypoAfterBolus: number;
-}
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AnalyticsResult } from "@/types";
 
 interface StatisticsGridProps {
-    statistics: Statistics;
+    statistics: AnalyticsResult;
 }
 
 export const StatisticsGrid: React.FC<StatisticsGridProps> = ({ statistics }) => {
@@ -22,23 +14,29 @@ export const StatisticsGrid: React.FC<StatisticsGridProps> = ({ statistics }) =>
                     <CardTitle className="text-lg">Průměrná glykémie</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-2xl font-bold">{statistics.avgGlucose} mmol/L</p>
+                    <p className="text-2xl font-bold">{statistics.avgGlucose.toFixed(1)} mmol/L</p>
                 </CardContent>
             </Card>
-            
+
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-lg">Hypoglykemické události</CardTitle>
-                    <CardDescription>Celkem / Po bolusu</CardDescription>
+                    <CardTitle className="text-lg">Čas v cílovém rozmezí</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-2xl font-bold">{statistics.timeInRange.toFixed(1)}%</p>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-lg">Hypoglykémie</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <p className="text-2xl font-bold">
-                        {statistics.hypoEvents} / {statistics.hypoAfterBolus}
+                        {statistics.totalHypos} ({statistics.hypoAfterBolus} po bolusu)
                     </p>
                 </CardContent>
             </Card>
-            
-            {/* ... další statistiky ... */}
         </div>
     );
 }; 

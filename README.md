@@ -1,36 +1,163 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DigiHealth Analytics - Analýza dat z inzulínové pumpy
 
-## Getting Started
+Webová aplikace pro komplexní analýzu a vizualizaci dat z inzulínových pump a kontinuálního monitoringu glukózy (CGM).
 
-First, run the development server:
+## Funkce
 
+### Analýza glykémií
+- Průměrná glykémie a GMI (Glucose Management Indicator)
+- Čas v cílovém rozmezí (Time in Range)
+- Variabilita glukózy (CV - Coefficient of Variation)
+- Detekce a analýza hypoglykémií
+
+### Analýza inzulínu
+- Denní profily bazálního a bolusového inzulínu
+- Citlivost na inzulín
+- Analýza vztahu mezi bolusy a hypoglykémiemi
+- Hodinové statistiky dávkování
+
+### Vizualizace
+- Interaktivní grafy pomocí Recharts
+- Přehledné statistické karty
+- Časové filtry a různé typy zobrazení
+- Responzivní design pro všechna zařízení
+
+## Technologie
+
+### Frontend
+- Next.js 14
+- TypeScript
+- Tailwind CSS
+- shadcn/ui komponenty
+- Recharts pro grafy
+
+### Backend
+- Python/Flask
+- Pandas pro analýzu dat
+- NumPy pro statistické výpočty
+- Flask-CORS pro cross-origin požadavky
+
+## Instalace
+
+1. Klonování repozitáře:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/yourusername/digihealth.git
+cd digihealth
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Instalace frontend závislostí:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Instalace backend závislostí:
+```bash
+pip install -r requirements.txt
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Vytvoření .env.local souboru:
+```env
+NEXT_PUBLIC_API_URL=http://localhost:5001
+```
 
-## Learn More
+## Spuštění aplikace
 
-To learn more about Next.js, take a look at the following resources:
+1. Spuštění backend serveru:
+```bash
+python server.py
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+2. Spuštění frontend development serveru:
+```bash
+npm run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Aplikace bude dostupná na `http://localhost:3000`
 
-## Deploy on Vercel
+## Struktura projektu
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+digihealth/
+├── app/
+│   ├── components/
+│   │   ├── analytics/
+│   │   │   ├── GlucoseMetricsCard.tsx
+│   │   │   ├── InsulinSensitivityChart.tsx
+│   │   │   ├── DailyProfile.tsx
+│   │   │   ├── HypoEventsTable.tsx
+│   │   │   └── StatisticsGrid.tsx
+│   │   ├── ui/
+│   │   │   ├── button.tsx
+│   │   │   ├── card.tsx
+│   │   │   ├── select.tsx
+│   │   │   └── tabs.tsx
+│   │   ├── Dashboard.tsx
+│   │   ├── FileUploader.tsx
+│   │   └── PythonData.tsx
+│   ├── lib/
+│   │   ├── utils.ts
+│   │   └── analytics.ts
+│   └── types/
+│       └── index.ts
+├── server/
+│   └── server.py
+└── public/
+    └── assets/
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Analytické funkce
+
+### Glykemické metriky
+- Průměrná glykémie
+- GMI (Glucose Management Indicator)
+- Čas v cílovém rozmezí (3.9-10.0 mmol/L)
+- Koeficient variace (CV)
+- Počet a analýza hypoglykémií
+
+### Inzulínové metriky
+- Hodinové mediány bazálních a bolusových dávek
+- Citlivost na inzulín (ISF)
+- Analýza vztahu mezi bolusy a hypoglykémiemi
+- Denní vzorce dávkování
+
+## Konfigurace
+
+Aplikace používá následující konfigurační parametry:
+
+```python
+HYPO_THRESHOLD = 3.9  # hranice hypoglykémie v mmol/L
+HYPER_THRESHOLD = 10.0  # hranice hyperglykémie v mmol/L
+TIME_WINDOW = 2  # časové okno pro analýzu po bolusu (hodiny)
+```
+
+## Vývoj
+
+Pro přidání nové funkcionality:
+
+1. Vytvořte novou větev
+2. Implementujte změny
+3. Přidejte testy
+4. Vytvořte pull request
+
+## Testování
+
+```bash
+# Frontend testy
+npm test
+
+# Backend testy
+python -m pytest
+```
+
+## Licence
+
+Distribuováno pod MIT licencí. Viz `LICENSE` pro více informací.
+
+## Autoři
+
+- Jméno Autora (@github_username)
+
+## Kontakt
+
+Email - email@example.com
+Project Link: https://github.com/yourusername/digihealth

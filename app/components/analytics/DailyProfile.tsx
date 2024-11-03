@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
-import { HourlyMedian } from '@/lib/analytics';
+import { HourlyMedian } from "@/types";
 
 interface DailyProfileProps {
     basalData: HourlyMedian[];
@@ -10,12 +10,12 @@ interface DailyProfileProps {
 
 export const DailyProfile: React.FC<DailyProfileProps> = ({ basalData, bolusData }) => {
     return (
-        <Card className="col-span-2">
+        <Card>
             <CardHeader>
                 <CardTitle>Denní profil inzulínu</CardTitle>
                 <CardDescription>Mediány dávek v průběhu dne</CardDescription>
             </CardHeader>
-            <CardContent className="h-[400px]">
+            <CardContent className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                     <LineChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -27,7 +27,6 @@ export const DailyProfile: React.FC<DailyProfileProps> = ({ basalData, bolusData
                         />
                         <YAxis yAxisId="basal" orientation="left" />
                         <YAxis yAxisId="bolus" orientation="right" />
-                        
                         <Line
                             yAxisId="basal"
                             data={basalData}

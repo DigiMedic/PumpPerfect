@@ -6,6 +6,15 @@ export interface DataRecord {
     Rate?: string | number;
 }
 
+export interface ChartProps {
+    data: DataRecord[];
+    title?: string;
+    description?: string;
+}
+
+export type TimeRange = "24h" | "7d" | "30d";
+export type ChartType = "line" | "area" | "scatter";
+
 export interface ProcessedData {
     basal: DataRecord[];
     bolus: DataRecord[];

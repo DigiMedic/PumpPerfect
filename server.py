@@ -1,41 +1,34 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from io import StringIO
 import pandas as pd
+import numpy as np
+from io import StringIO
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
-
 # Povolíme CORS pro všechny routy
-CORS(app, resources={
-    r"/*": {
-        "origins": ["http://localhost:3000"],
-        "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Accept"],
-        "expose_headers": ["Content-Type"],
-        "supports_credentials": False,
-        "max_age": 3600
-    }
-})
+CORS(app, resources={r"/*": {"origins": "*"}})
 
-@app.route('/', methods=['GET', 'OPTIONS'])
-def home():
-    if request.method == 'OPTIONS':
-        return '', 204
-    return jsonify({
-        "message": "Welcome to the API",
-        "status": "running",
-        "version": "1.0.0"
-    })
+# Přidáme health check endpoint
+@app.route('/', methods=['GET'])
+def health_check():
+    return jsonify({"status": "healthy", "message": "Server is running"}), 200
 
 @app.route('/post_data', methods=['POST', 'OPTIONS'])
 def post_data():
     if request.method == 'OPTIONS':
-        return '', 204
+        # Přidáme CORS hlavičky
+        response = jsonify({'status': 'ok'})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response, 204
         
     try:
         data = request.get_json()
-        print("Received data:", data)
-        
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+
         result_dict = {
             "basal": [],
             "bolus": [],
@@ -49,60 +42,50 @@ def post_data():
             if key in data and data[key]:
                 try:
                     for csv_content in data[key]:
-                        # Přeskočíme první řádek s metadaty
-                        lines = csv_content.split('\n')
-                        if len(lines) > 1:
-                            # Použijeme pouze data od druhého řádku
-                            header = lines[1]  # Druhý řádek obsahuje hlavičky
-                            data_content = '\n'.join(lines[2:])  # Data od třetího řádku
+                        if not csv_content:
+                            continue
                             
-                            if data_content.strip():
-                                df = pd.read_csv(
-                                    StringIO(header + '\n' + data_content),
-                                    skipinitialspace=True,
-                                    on_bad_lines='skip'
-                                )
-                                
-                                # Nahradíme NaN hodnoty za None
-                                df = df.where(pd.notnull(df), None)
-                                
-                                # Převedeme DataFrame na seznam slovníků
-                                records = []
-                                for _, row in df.iterrows():
-                                    record = {}
-                                    for column in df.columns:
-                                        value = row[column]
-                                        # Převedeme numpy.int64/float64 na Python int/float
-                                        if pd.isna(value):
-                                            record[column] = None
-                                        elif isinstance(value, (pd.Int64Dtype, pd.Float64Dtype)):
-                                            record[column] = float(value)
-                                        else:
-                                            record[column] = value
-                                    records.append(record)
-                                
-                                result_dict[key].extend(records)
-                                print(f"Successfully processed {key} data with {len(records)} records")
+                        # Zpracování CSV dat
+                        df = pd.read_csv(
+                            StringIO(csv_content),
+                            skiprows=1,
+                            skipinitialspace=True,
+                            on_bad_lines='skip'
+                        )
+                        
+                        # Čištění dat
+                        df = clean_data(df)
+                        
+                        # Konverze na seznam slovníků s ošetřením NaN hodnot
+                        records = []
+                        for _, row in df.iterrows():
+                            record = {}
+                            for column in df.columns:
+                                value = row[column]
+                                if pd.isna(value):
+                                    record[column] = None
+                                elif isinstance(value, (np.int64, np.float64)):
+                                    record[column] = float(value)
+                                elif isinstance(value, pd.Timestamp):
+                                    record[column] = value.isoformat()
+                                else:
+                                    record[column] = str(value)
+                            records.append(record)
+                        
+                        result_dict[key].extend(records)
+                        print(f"Successfully processed {key} data with {len(records)} records")
                 except Exception as e:
-                    print(f"Error processing {key} data:", str(e))
-                    return jsonify({
-                        'message': 'Error',
-                        'error': f'Error processing {key} data: {str(e)}'
-                    }), 400
+                    print(f"Error processing {key} data: {str(e)}")
+                    return jsonify({"error": f"Error processing {key} data: {str(e)}"}), 500
 
         return jsonify({
-            "message": "Data processed successfully",
+            "message": "Data successfully processed",
             "processed_data": result_dict
-        }), 200
+        })
 
     except Exception as e:
-        print("Server error:", str(e))
-        return jsonify({
-            'message': 'Error',
-            'error': str(e)
-        }), 500
+        print(f"Server error: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
 
-if __name__ == "__main__":
-    print("Starting server...")
-    print("Server will be available at http://localhost:5001")
-    app.run(debug=True, host='0.0.0.0', port=5001)
+if __name__ == '__main__':
+    app.run(port=5001, debug=True, host='0.0.0.0')
