@@ -35,8 +35,10 @@ export const PythonData: React.FC<PythonDataProps> = ({ data }) => {
     const [analytics, setAnalytics] = useState<AnalyticsResult | null>(null);
 
     useEffect(() => {
-        if (data) {
+        if (data && Object.keys(data).length > 0) {
+            console.log("Processing data:", data); // Debug log
             const results = analyzeData(data);
+            console.log("Analysis results:", results); // Debug log
             setAnalytics(results);
         }
     }, [data]);

@@ -38,31 +38,34 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onUploadStatus }) => {
         try {
             const formData = new FormData();
             selectedFiles.forEach((file) => {
-                // Určení typu souboru podle názvu
-                const fileType = file.name.toLowerCase().includes('basal') ? 'basal' :
-                               file.name.toLowerCase().includes('bolus') ? 'bolus' :
-                               file.name.toLowerCase().includes('cgm') ? 'cgm' :
-                               file.name.toLowerCase().includes('insulin') ? 'insulin' :
-                               file.name.toLowerCase().includes('bg') ? 'bg' :
-                               file.name.toLowerCase().includes('alarm') ? 'alarms' : 'other';
-                
-                if (fileType !== 'other') {
-                    if (!formData.has(fileType)) {
-                        formData.append(fileType, file);
-                    }
-                }
+                console.log('Uploading file:', file.name);
+                formData.append('file', file);
             });
 
+            console.log('Sending request to:', `${process.env.NEXT_PUBLIC_API_URL}/post_data`);
+            
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/post_data`, {
                 method: 'POST',
-                body: formData
+                body: formData,
             });
 
             if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Server response:', response.status, errorText);
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
             const data = await response.json();
+            console.log('Received data:', data);
+            
+            if (data.processed_data) {
+                console.log('Records count:', {
+                    basal: data.processed_data.basal?.length || 0,
+                    bolus: data.processed_data.bolus?.length || 0,
+                    cgm: data.processed_data.cgm?.length || 0,
+                });
+            }
+
             onUploadStatus('finished', data);
             setSelectedFiles([]);
         } catch (error) {
