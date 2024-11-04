@@ -127,3 +127,9 @@ export const isValidProcessedData = (data: any): data is ProcessedData => {
 
     return hasValidBasal && hasValidBolus && hasValidCGM;
 };
+
+export interface AnalyticsProps {
+  data: ProcessedData;
+  timeRange: TimeRange;
+  showDetails: boolean;
+}

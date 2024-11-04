@@ -10,6 +10,8 @@ import { Activity, Target, AlertTriangle, TrendingUp } from "lucide-react";
 import { AnalyticsResult, TimeRange, ProcessedData } from "@/types";
 import { calculatePumpUsage } from '@/lib/analytics/calculatePumpUsage';
 import { PumpUsageAnalysis } from './PumpUsageAnalysis';
+import { ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 
 interface AnalyticsDashboardProps {
     data: AnalyticsResult;
@@ -18,6 +20,21 @@ interface AnalyticsDashboardProps {
     showDetails: boolean;
     chartType: string;
 }
+
+const MemoizedChart = React.memo(({ data }: { data: any }) => (
+    <div className="h-[300px] w-full">
+        <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={data}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="time" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="value" stroke="#8884d8" />
+            </LineChart>
+        </ResponsiveContainer>
+    </div>
+));
 
 export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
     data,
@@ -141,11 +158,11 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
             {/* Hlavní grafy */}
             <div className="grid gap-4 md:grid-cols-2">
                 <Section title="Průběh glykémie" description="Kontinuální monitoring glukózy">
-                    <GlucoseProfileChart data={rawData.cgm} timeRange={timeRange} />
+                    <MemoizedChart data={rawData.cgm} />
                 </Section>
 
                 <Section title="Distribuce glykémií" description="Rozložení hodnot glukózy">
-                    <GlucoseDistributionChart data={rawData.cgm} />
+                    <MemoizedChart data={rawData.cgm} />
                 </Section>
             </div>
 

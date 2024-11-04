@@ -9,6 +9,11 @@ export interface DailyRiskScore {
     manualAdjustments: number;
     hypos: number;
     delayedBoluses: number;
+    details: {
+        hypoAfterBolus: number;
+        basalChanges: number;
+        insulinStacking: number;
+    };
 }
 
 export interface DetailedDayData {
@@ -18,4 +23,24 @@ export interface DetailedDayData {
     basalRate?: number;
     mealTime?: boolean;
     isHypo?: boolean;
+}
+
+export interface DetailedAnalysis {
+  dailyStats: {
+    date: string;
+    hypos: number;
+    hypers: number;
+    meanGlucose: number;
+    timeInRange: number;
+    totalInsulin: number;
+    basalTotal: number;
+    bolusTotal: number;
+  }[];
+  riskFactors: {
+    hypoRisk: number;
+    hyperRisk: number;
+    variabilityRisk: number;
+    totalRisk: number;
+  };
+  recommendations: string[];
 } 

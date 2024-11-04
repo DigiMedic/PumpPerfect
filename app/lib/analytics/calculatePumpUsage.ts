@@ -148,9 +148,15 @@ export const calculatePumpUsage = (data: ProcessedData): PumpUsageData => {
 const analyzeDailyPatterns = (data: ProcessedData): DailyRiskScore[] => {
     const dailyScores: { [key: string]: DailyRiskScore } = {};
     
+    // Získání všech unikátních dat ze všech zdrojů
+    const dates = new Set<string>();
+    [...data.cgm, ...data.bolus, ...data.basal].forEach(record => {
+        const date = new Date(record.Timestamp || record.Time || '').toISOString().split('T')[0];
+        dates.add(date);
+    });
+
     // Inicializace skóre pro každý den
-    const dates = getAllDates(data);
-    dates.forEach(date => {
+    Array.from(dates).sort().forEach(date => {
         dailyScores[date] = {
             date,
             score: 0,
@@ -166,32 +172,62 @@ const analyzeDailyPatterns = (data: ProcessedData): DailyRiskScore[] => {
     });
 
     // Analýza pro každý den
-    dates.forEach(date => {
-        // 1. Kontrola bazálních změn
-        const basalChanges = countBasalChanges(data.basal, date);
-        if (basalChanges > THRESHOLDS.maxBasalChanges) {
-            dailyScores[date].manualAdjustments = basalChanges;
-            dailyScores[date].score += basalChanges * RISK_WEIGHTS.basalInterruption;
-            dailyScores[date].details.basalChanges = basalChanges;
-        }
+    Object.keys(dailyScores).forEach(date => {
+        const dayData = {
+            cgm: data.cgm.filter(r => new Date(r.Timestamp || r.Time || '').toISOString().split('T')[0] === date),
+            bolus: data.bolus.filter(r => new Date(r.Timestamp || r.Time || '').toISOString().split('T')[0] === date),
+            basal: data.basal.filter(r => new Date(r.Timestamp || r.Time || '').toISOString().split('T')[0] === date)
+        };
 
-        // 2. Kontrola hypoglykémií po bolusech
-        data.bolus.forEach(bolus => {
-            const bolusDate = new Date(bolus.Timestamp || bolus.Time || '').toISOString().split('T')[0];
-            if (bolusDate === date && detectHypoAfterBolus(bolus, data.cgm, date)) {
+        // Analýza hypoglykémií
+        dayData.cgm.forEach(record => {
+            if (record['CGM Glucose Value (mmol/l)'] < THRESHOLDS.hypo) {
                 dailyScores[date].hypos++;
-                dailyScores[date].score += RISK_WEIGHTS.hypoAfterBolus;
-                dailyScores[date].details.hypoAfterBolus++;
+                dailyScores[date].score += RISK_WEIGHTS.hypo;
             }
         });
 
-        // 3. Kontrola opožděných bolusů
+        // Analýza bazálních změn
+        let lastBasalRate: number | null = null;
+        dayData.basal.forEach(record => {
+            if (lastBasalRate !== null && record.Rate !== lastBasalRate) {
+                dailyScores[date].manualAdjustments++;
+                if (dailyScores[date].manualAdjustments > THRESHOLDS.maxBasalChanges) {
+                    dailyScores[date].score += RISK_WEIGHTS.basalInterruption;
+                }
+            }
+            lastBasalRate = record.Rate;
+        });
+
+        // Analýza bolusů
         MEAL_TIMES.forEach(mealTime => {
-            const mealDateTime = new Date(date);
-            mealDateTime.setHours(mealTime.start);
-            if (detectDelayedBolus(mealDateTime, data.bolus)) {
+            const mealTimeStart = new Date(date);
+            mealTimeStart.setHours(mealTime.start, 0, 0, 0);
+            const mealTimeEnd = new Date(date);
+            mealTimeEnd.setHours(mealTime.end, 0, 0, 0);
+
+            const bolusesInMealTime = dayData.bolus.filter(bolus => {
+                const bolusTime = new Date(bolus.Timestamp || bolus.Time || '');
+                return bolusTime >= mealTimeStart && bolusTime <= mealTimeEnd;
+            });
+
+            if (bolusesInMealTime.length === 0) {
                 dailyScores[date].delayedBoluses++;
-                dailyScores[date].score += RISK_WEIGHTS.delayedBolus;
+                dailyScores[date].score += RISK_WEIGHTS.missedMeal;
+            }
+        });
+
+        // Analýza stacking inzulínu
+        dayData.bolus.forEach((bolus, index) => {
+            const bolusTime = new Date(bolus.Timestamp || bolus.Time || '');
+            const subsequentBoluses = dayData.bolus.slice(index + 1).filter(nextBolus => {
+                const nextTime = new Date(nextBolus.Timestamp || nextBolus.Time || '');
+                const timeDiff = (nextTime.getTime() - bolusTime.getTime()) / (1000 * 60);
+                return timeDiff <= THRESHOLDS.stackingWindow;
+            });
+
+            if (subsequentBoluses.length > 0) {
+                dailyScores[date].score += RISK_WEIGHTS.insulinStacking;
             }
         });
     });

@@ -5,6 +5,9 @@ import { ResponsiveContainer, LineChart, Line, XAxis, YAxis,
 import { AlertTriangle, Activity, AlertCircle, Clock, Settings, Zap } from 'lucide-react';
 import { PumpUsageData } from '@/types';
 import { CustomTooltip } from './CustomTooltip';
+import { RiskHeatmap } from './RiskHeatmap';
+import { DayDetailChart } from './DayDetailChart';
+import { CombinedAnalysisChart } from './CombinedAnalysisChart';
 
 interface PumpUsageAnalysisProps {
     data?: PumpUsageData;
@@ -47,6 +50,17 @@ export const PumpUsageAnalysis: React.FC<PumpUsageAnalysisProps> = ({ data }) =>
     };
 
     const riskLevel = getRiskLevel(stats.averageScore);
+
+    const formatDetailedData = (data: DetailedDayData[]) => {
+        return data.map(record => ({
+            time: record.timestamp,
+            glucose: record.glucoseValue,
+            basalRate: record.basalRate,
+            bolusAmount: record.bolusAmount,
+            isHypo: record.isHypo,
+            isMeal: record.mealTime
+        }));
+    };
 
     return (
         <div className="space-y-6">
@@ -96,33 +110,35 @@ export const PumpUsageAnalysis: React.FC<PumpUsageAnalysisProps> = ({ data }) =>
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="h-[400px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={chartData}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="date" />
-                            <YAxis />
-                            <Tooltip
-                                content={({ active, payload, label }) => {
-                                    if (!active || !payload?.length) return null;
-                                    const data = payload[0].payload;
-                                    return (
-                                        <div className="bg-white p-4 rounded-lg shadow-lg border">
-                                            <p className="font-bold">{label}</p>
-                                            <p>Rizikové skóre: {data.score.toFixed(1)}</p>
-                                            <p>Hypoglykémie: {data.hypos}</p>
-                                            <p>Úpravy bazálu: {data.manualAdjustments}</p>
-                                            <p>Opožděné bolusy: {data.delayedBoluses}</p>
-                                        </div>
-                                    );
-                                }}
-                            />
-                            <Bar dataKey="score" name="Rizikové skóre">
-                                {chartData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={getBarColor(entry.score)} />
-                                ))}
-                            </Bar>
-                        </BarChart>
-                    </ResponsiveContainer>
+                    <div className="h-full w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={chartData}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="date" />
+                                <YAxis />
+                                <Tooltip
+                                    content={({ active, payload, label }) => {
+                                        if (!active || !payload?.length) return null;
+                                        const data = payload[0].payload;
+                                        return (
+                                            <div className="bg-white p-4 rounded-lg shadow-lg border">
+                                                <p className="font-bold">{label}</p>
+                                                <p>Rizikové skóre: {data.score.toFixed(1)}</p>
+                                                <p>Hypoglykémie: {data.hypos}</p>
+                                                <p>Úpravy bazálu: {data.manualAdjustments}</p>
+                                                <p>Opožděné bolusy: {data.delayedBoluses}</p>
+                                            </div>
+                                        );
+                                    }}
+                                />
+                                <Bar dataKey="score" name="Rizikové skóre">
+                                    {chartData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={getBarColor(entry.score)} />
+                                    ))}
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
                 </CardContent>
             </Card>
 
@@ -153,6 +169,29 @@ export const PumpUsageAnalysis: React.FC<PumpUsageAnalysisProps> = ({ data }) =>
                     description="Na den"
                 />
             </div>
+
+            {/* Heatmapa */}
+            <RiskHeatmap 
+                data={data.dailyRiskScores} 
+                onDayClick={setSelectedDate} 
+            />
+
+            {/* Detailní denní graf */}
+            {selectedDate && (
+                <DayDetailChart
+                    data={data.detailedData.filter(
+                        record => new Date(record.timestamp).toISOString().split('T')[0] === selectedDate
+                    )}
+                    date={selectedDate}
+                />
+            )}
+
+            {/* Přidáme nový kombinovaný graf */}
+            <CombinedAnalysisChart 
+                data={formatDetailedData(data.detailedData || [])}
+                title="Detailní analýza glykémie a inzulínu"
+                description="Průběh glykémie, bazální a bolusové dávky"
+            />
         </div>
     );
 };
