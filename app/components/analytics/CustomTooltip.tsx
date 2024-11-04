@@ -1,41 +1,49 @@
 import React from 'react';
 
-interface TooltipProps {
+interface CustomTooltipProps {
     active?: boolean;
-    payload?: any[];
+    payload?: Array<{
+        value: number | null | undefined;
+        name: string;
+        color: string;
+    }>;
     label?: string;
-    type?: string;
 }
 
-export const CustomTooltip: React.FC<TooltipProps> = ({ active, payload, label, type }) => {
+export const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label }) => {
     if (!active || !payload?.length) return null;
 
-    const value = payload[0].value as number;
-    const isGlucose = type === 'cgm';
-    const isHypo = isGlucose && value < 3.9;
+    // Debug log
+    console.log('Tooltip payload:', payload);
+
+    const formatValue = (value: number | null | undefined, name: string) => {
+        if (typeof value !== 'number') {
+            console.log(`Invalid value for ${name}:`, value);
+            return '-';
+        }
+        try {
+            return value.toFixed(1);
+        } catch (error) {
+            console.error(`Error formatting value for ${name}:`, error);
+            return '-';
+        }
+    };
 
     return (
-        <div className={`rounded-lg border p-2 shadow-sm ${
-            isHypo ? 'bg-red-50 border-red-200' : 'bg-background'
-        }`}>
-            <div className="grid grid-cols-2 gap-2">
-                <div className="flex flex-col">
-                    <span className="text-[0.70rem] uppercase text-muted-foreground">
-                        {isGlucose ? 'Glykémie' : 'Dávka inzulínu'}
-                    </span>
-                    <span className={`font-bold ${isHypo ? 'text-red-600' : ''}`}>
-                        {value.toFixed(1)} {isGlucose ? 'mmol/l' : 'U'}
-                    </span>
-                </div>
-                <div className="flex flex-col">
-                    <span className="text-[0.70rem] uppercase text-muted-foreground">
-                        Čas
-                    </span>
-                    <span className="font-bold">
-                        {new Date(label).toLocaleString('cs-CZ')}
-                    </span>
-                </div>
-            </div>
+        <div className="rounded-lg border bg-background p-2 shadow-md">
+            <p className="font-medium">
+                {label ? new Date(label).toLocaleTimeString('cs-CZ') : '-'}
+            </p>
+            {payload.map((entry, index) => {
+                // Debug log pro každý entry
+                console.log(`Entry ${index}:`, entry);
+                
+                return (
+                    <p key={index} style={{ color: entry.color }}>
+                        {entry.name}: {formatValue(entry.value, entry.name)} {entry.name === 'Glykémie' ? 'mmol/L' : 'U'}
+                    </p>
+                );
+            })}
         </div>
     );
 }; 

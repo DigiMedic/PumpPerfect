@@ -95,6 +95,7 @@ export interface AnalyticsResult {
         bolus: HourlyMedian[];
     };
     insulinSensitivity: InsulinSensitivity[];
+    pumpUsage?: PumpUsageData;
 }
 
 export type TimeRange = "24h" | "7d" | "30d";

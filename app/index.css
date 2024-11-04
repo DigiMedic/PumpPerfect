@@ -70,3 +70,12 @@ body {
   }
 }
 
+.recharts-heatmap-cell {
+    transition: fill 0.2s ease;
+}
+
+.recharts-heatmap-cell:hover {
+    opacity: 0.8;
+    cursor: pointer;
+}
+

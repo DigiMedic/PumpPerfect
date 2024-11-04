@@ -3,7 +3,7 @@ import { useDropzone } from 'react-dropzone';
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
-import { FileIcon } from "lucide-react";
+import { FileIcon, FolderIcon } from "lucide-react";
 
 interface FileUploaderProps {
     onUploadStatus: (status: string, data?: any) => void;
@@ -23,8 +23,18 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onUploadStatus }) => {
         accept: {
             'text/csv': ['.csv']
         },
-        multiple: true
+        multiple: true,
+        useFsAccessApi: false,
+        webkitdirectory: true,
+        noClick: false
     });
+
+    const handleFolderSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        const csvFiles = files.filter(file => file.name.endsWith('.csv'));
+        console.log('Selected folder files:', csvFiles.map(f => f.name));
+        setSelectedFiles(csvFiles);
+    };
 
     const handleUpload = async () => {
         if (selectedFiles.length === 0) {
@@ -37,13 +47,15 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onUploadStatus }) => {
         }
 
         setIsUploading(true);
-        onUploadStatus('uploading');
+        onUploadStatus('uploading', selectedFiles);
 
         try {
             const formData = new FormData();
             selectedFiles.forEach((file) => {
                 formData.append('file', file);
             });
+
+            console.log('Uploading files:', selectedFiles.map(f => f.name));
 
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/post_data`, {
                 method: 'POST',
@@ -61,31 +73,21 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onUploadStatus }) => {
                 throw new Error(data.error);
             }
 
-            if (!data.processed_data || 
-                !data.processed_data.basal || 
+            if (!data.processed_data) {
+                throw new Error('Server nevrátil zpracovaná data');
+            }
+
+            if (!data.processed_data.basal || 
                 !data.processed_data.bolus || 
                 !data.processed_data.cgm) {
                 throw new Error('Neplatná struktura dat ze serveru');
             }
 
-            toast({
-                title: "Úspěch",
-                description: "Soubory byly úspěšně nahrány a zpracovány",
-            });
-
             onUploadStatus('finished', data);
             setSelectedFiles([]);
         } catch (error) {
             console.error('Upload error:', error);
-            toast({
-                title: "Chyba při nahrávání",
-                description: error instanceof Error ? error.message : 'Neznámá chyba',
-                variant: "destructive"
-            });
-            onUploadStatus('error', { 
-                message: 'Upload failed',
-                error: error instanceof Error ? error.message : 'Unknown error occurred'
-            });
+            onUploadStatus('error', { error: error.message });
         } finally {
             setIsUploading(false);
         }
@@ -93,30 +95,51 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onUploadStatus }) => {
 
     return (
         <div className="space-y-6">
-            <div
-                {...getRootProps()}
-                className={`
-                    border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
-                    transition-colors duration-200
-                    ${isDragActive ? 'border-primary bg-primary/5' : 'border-gray-300'}
-                    ${isUploading ? 'opacity-50 cursor-not-allowed' : 'hover:border-primary hover:bg-primary/5'}
-                `}
-            >
-                <input {...getInputProps()} disabled={isUploading} />
-                <div className="flex flex-col items-center justify-center gap-4">
-                    <FileIcon className="h-12 w-12 text-muted-foreground" />
-                    {isDragActive ? (
-                        <p className="text-primary font-medium">Přetáhněte soubory sem...</p>
-                    ) : (
-                        <div className="space-y-2">
-                            <p className="text-muted-foreground">
-                                Přetáhněte CSV soubory sem nebo klikněte pro výběr
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                                Požadované soubory: basal, bolus, cgm
-                            </p>
+            <div className="flex gap-4 justify-center mb-4">
+                <div {...getRootProps()} className="flex-1">
+                    <div
+                        className={`
+                            border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
+                            transition-colors duration-200
+                            ${isDragActive ? 'border-primary bg-primary/5' : 'border-gray-300'}
+                            ${isUploading ? 'opacity-50 cursor-not-allowed' : 'hover:border-primary hover:bg-primary/5'}
+                        `}
+                    >
+                        <input {...getInputProps()} disabled={isUploading} />
+                        <div className="flex flex-col items-center justify-center gap-4">
+                            <FileIcon className="h-12 w-12 text-muted-foreground" />
+                            {isDragActive ? (
+                                <p className="text-primary font-medium">Přetáhněte soubory sem...</p>
+                            ) : (
+                                <div className="space-y-2">
+                                    <p className="text-muted-foreground">
+                                        Přetáhněte CSV soubory sem nebo klikněte pro výběr
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Požadované soubory: basal, bolus, cgm
+                                    </p>
+                                </div>
+                            )}
                         </div>
-                    )}
+                    </div>
+                </div>
+
+                <div className="flex flex-col items-center justify-center">
+                    <p className="text-muted-foreground mb-2">nebo</p>
+                    <label className="cursor-pointer">
+                        <input
+                            type="file"
+                            webkitdirectory="true"
+                            directory=""
+                            className="hidden"
+                            onChange={handleFolderSelect}
+                            disabled={isUploading}
+                        />
+                        <div className="flex flex-col items-center gap-2 p-4 border-2 border-dashed rounded-lg hover:border-primary hover:bg-primary/5 transition-colors">
+                            <FolderIcon className="h-12 w-12 text-muted-foreground" />
+                            <span className="text-sm text-muted-foreground">Vybrat složku</span>
+                        </div>
+                    </label>
                 </div>
             </div>
 

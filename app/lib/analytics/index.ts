@@ -1,43 +1,45 @@
-import { DataRecord } from "@/types";
+import { ProcessedData, AnalyticsResult } from "@/types";
+import { calculatePumpUsage } from "./calculatePumpUsage";
 
-export interface HypoEvent {
-    timestamp: string;
-    glucoseValue: number;
-    relatedBolus?: {
-        timestamp: string;
-        amount: number;
-    };
-}
+export const analyzeData = async (data: ProcessedData): Promise<AnalyticsResult> => {
+    console.log('Analyzing data:', data);
 
-export interface HourlyMedian {
-    hour: number;
-    median: number;
-    count: number;
-}
+    try {
+        // Základní validace dat
+        if (!data.cgm || !data.basal || !data.bolus) {
+            throw new Error('Chybí požadovaná data pro analýzu');
+        }
 
-export interface AnalyticsResult {
-    avgGlucose: number;
-    hypoEvents: HypoEvent[];
-    timeInRange: number;
-    hourlyBasalMedian: HourlyMedian[];
-    hourlyBolusMedian: HourlyMedian[];
-    hypoAfterBolus: number;
-    totalHypos: number;
-}
+        // Výpočet základních metrik
+        const avgGlucose = calculateAverageGlucose(data.cgm);
+        const glucoseMetrics = calculateGlucoseMetrics(data.cgm);
+        const timeInRange = calculateTimeInRange(data.cgm);
+        const hourlyBasalMedian = calculateHourlyMedian(data.basal);
+        const hourlyBolusMedian = calculateHourlyMedian(data.bolus);
+        const { hypoEvents, hypoAfterBolus, totalHypos } = analyzeHypoglycemia(data);
+        const insulinSensitivity = calculateInsulinSensitivity(data);
+        const pumpUsage = calculatePumpUsage(data);
 
-export const analyzeData = (data: {
-    cgm: DataRecord[];
-    basal: DataRecord[];
-    bolus: DataRecord[];
-}): AnalyticsResult => {
-    // Implementace analytických funkcí
-    return {
-        avgGlucose: 0,
-        hypoEvents: [],
-        timeInRange: 0,
-        hourlyBasalMedian: [],
-        hourlyBolusMedian: [],
-        hypoAfterBolus: 0,
-        totalHypos: 0
-    };
-}; 
+        return {
+            avgGlucose,
+            glucoseMetrics,
+            hypoEvents,
+            timeInRange,
+            hourlyBasalMedian,
+            hourlyBolusMedian,
+            hypoAfterBolus,
+            totalHypos,
+            dailyPatterns: {
+                basal: hourlyBasalMedian,
+                bolus: hourlyBolusMedian
+            },
+            insulinSensitivity,
+            pumpUsage
+        };
+    } catch (error) {
+        console.error('Error in analyzeData:', error);
+        throw error;
+    }
+};
+
+// Pomocné funkce pro výpočty... 

@@ -8,6 +8,8 @@ import { Section } from "@/components/ui/section";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Activity, Target, AlertTriangle, TrendingUp } from "lucide-react";
 import { AnalyticsResult, TimeRange, ProcessedData } from "@/types";
+import { calculatePumpUsage } from '@/lib/analytics/calculatePumpUsage';
+import { PumpUsageAnalysis } from './PumpUsageAnalysis';
 
 interface AnalyticsDashboardProps {
     data: AnalyticsResult;
@@ -24,6 +26,14 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
     showDetails,
     chartType
 }) => {
+    console.log('Analytics Dashboard Data:', {
+        data,
+        timeRange,
+        rawData,
+        showDetails,
+        chartType
+    });
+
     if (!data || !rawData) {
         return (
             <Card>
@@ -50,11 +60,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
         );
     }
 
-    console.log('Analytics Dashboard Data:', {
-        rawData,
-        processedData: data,
-        timeRange
-    });
+    const pumpUsageData = data.pumpUsage || calculatePumpUsage(rawData);
 
     return (
         <div className="space-y-8">
@@ -185,6 +191,15 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                         </CardContent>
                     </Card>
                 </div>
+            </Section>
+
+            <Section 
+                title="Analýza používání pumpy" 
+                description="Detekce potenciálně problematického používání"
+            >
+                <PumpUsageAnalysis
+                    data={pumpUsageData}
+                />
             </Section>
         </div>
     );
