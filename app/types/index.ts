@@ -7,21 +7,61 @@ export interface DataRecord {
 }
 
 export interface ProcessedData {
-    basal: DataRecord[];
-    bolus: DataRecord[];
-    insulin: DataRecord[];
-    alarms: DataRecord[];
-    bg: DataRecord[];
-    cgm: DataRecord[];
+    basal: BasalRecord[];
+    bolus: BolusRecord[];
+    cgm: CGMRecord[];
+    insulin?: InsulinRecord[];
+    alarms?: AlarmRecord[];
+    bg?: BGRecord[];
 }
 
-export interface HypoEvent {
-    timestamp: string;
-    glucoseValue: number;
-    relatedBolus?: {
-        timestamp: string;
-        amount: number;
-    };
+export interface BasalRecord {
+    Timestamp?: string;
+    Time?: string;
+    Rate: number;
+}
+
+export interface BolusRecord {
+    Timestamp?: string;
+    Time?: string;
+    'Insulin Delivered (U)': number;
+}
+
+export interface CGMRecord {
+    Timestamp?: string;
+    Time?: string;
+    'CGM Glucose Value (mmol/l)': number;
+}
+
+export interface InsulinRecord {
+    Timestamp?: string;
+    Time?: string;
+    'Total Daily Insulin (U)': number;
+}
+
+export interface AlarmRecord {
+    Timestamp?: string;
+    Time?: string;
+    Type: string;
+    Description?: string;
+}
+
+export interface BGRecord {
+    Timestamp?: string;
+    Time?: string;
+    Value: number;
+}
+
+export interface GlucoseMetrics {
+    average: number;
+    median: number;
+    std: number;
+    cv: number;
+    timeInRange: number;
+    timeBelow: number;
+    timeAbove: number;
+    gmi: number;
+    hypoEvents: number;
 }
 
 export interface HourlyMedian {
@@ -30,49 +70,59 @@ export interface HourlyMedian {
     count: number;
 }
 
-export interface GlucoseMetrics {
-    average: number;
-    median: number;
-    std: number;
-    cv: number;  // Koeficient variace
-    timeInRange: number;
-    timeBelow: number;
-    timeAbove: number;
-    gmi: number;  // Glucose Management Indicator
-    hypoEvents: number;
-}
-
-export interface DailyPattern {
-    hour: number;
-    mean: number;
-    median: number;
-    std: number;
-    count: number;
+export interface HypoEvent {
+    timestamp: string;
+    glucoseValue: number;
+    duration: number;
+    relatedBolus?: {
+        timestamp: string;
+        amount: number;
+        timeDiff: number;
+    };
 }
 
 export interface AnalyticsResult {
     avgGlucose: number;
+    glucoseMetrics: GlucoseMetrics;
     hypoEvents: HypoEvent[];
     timeInRange: number;
     hourlyBasalMedian: HourlyMedian[];
     hourlyBolusMedian: HourlyMedian[];
     hypoAfterBolus: number;
     totalHypos: number;
-    glucoseMetrics: GlucoseMetrics;
     dailyPatterns: {
-        basal: DailyPattern[];
-        bolus: DailyPattern[];
+        basal: HourlyMedian[];
+        bolus: HourlyMedian[];
     };
-    insulinSensitivity: {
-        time: string;
-        insulin_amount: number;
-        glucose_drop: number;
-        sensitivity: number;
-    }[];
+    insulinSensitivity: InsulinSensitivity[];
 }
 
 export type TimeRange = "24h" | "7d" | "30d";
 export type ChartType = "line" | "area" | "scatter";
 
-// Export typu pro server response
-export type { ServerResponse } from '@/components/Dashboard';
+export const isValidProcessedData = (data: any): data is ProcessedData => {
+    if (!data || typeof data !== 'object') return false;
+    
+    // Kontrola povinných polí
+    if (!Array.isArray(data.basal) || !Array.isArray(data.bolus) || !Array.isArray(data.cgm)) {
+        return false;
+    }
+
+    // Kontrola formátu záznamů
+    const hasValidBasal = data.basal.every((record: any) => 
+        (record.Timestamp || record.Time) && 
+        typeof record.Rate === 'number'
+    );
+
+    const hasValidBolus = data.bolus.every((record: any) => 
+        (record.Timestamp || record.Time) && 
+        typeof record['Insulin Delivered (U)'] === 'number'
+    );
+
+    const hasValidCGM = data.cgm.every((record: any) => 
+        (record.Timestamp || record.Time) && 
+        typeof record['CGM Glucose Value (mmol/l)'] === 'number'
+    );
+
+    return hasValidBasal && hasValidBolus && hasValidCGM;
+};

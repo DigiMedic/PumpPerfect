@@ -14,30 +14,53 @@ app = Flask(__name__)
 CORS(app)
 
 def process_csv_file(file, file_type):
-    """Zpracuje CSV soubor s přeskočením metadat"""
+    """Zpracuje CSV soubor a vrátí DataFrame"""
     try:
         content = file.read().decode('utf-8')
-        lines = content.split('\n')
-        
         # Přeskočení prvního řádku s metadaty
+        lines = content.split('\n')
         if len(lines) > 1:
-            # Použití druhého řádku jako hlavičky
-            header = lines[1]
-            # Data od třetího řádku
-            data = '\n'.join(lines[2:])
+            header = lines[1]  # Druhý řádek obsahuje hlavičky
+            data = '\n'.join(lines[2:])  # Data od třetího řádku
             
-            if data.strip():
-                df = pd.read_csv(
-                    StringIO(header + '\n' + data),
-                    skipinitialspace=True,
-                    on_bad_lines='skip'
-                )
-                logger.info(f"Columns found in {file_type}: {df.columns.tolist()}")
-                return df
+            df = pd.read_csv(StringIO(header + '\n' + data))
+            logger.info(f"Columns in {file_type}: {df.columns.tolist()}")
             
-        logger.warning(f"No data found in {file_type} file")
+            # Kontrola povinných sloupců
+            required_columns = {
+                'basal': ['Timestamp', 'Rate'],
+                'bolus': ['Timestamp', 'Insulin Delivered (U)'],
+                'cgm': ['Timestamp', 'CGM Glucose Value (mmol/l)']
+            }.get(file_type, ['Timestamp'])
+
+            missing_columns = [col for col in required_columns if col not in df.columns]
+            if missing_columns:
+                logger.error(f"Missing columns in {file_type}: {missing_columns}")
+                return None
+
+            # Konverze časových údajů
+            if 'Timestamp' in df.columns:
+                df['Timestamp'] = pd.to_datetime(df['Timestamp'])
+                df = df.dropna(subset=['Timestamp'])
+
+            # Konverze numerických hodnot
+            numeric_columns = {
+                'basal': ['Rate'],
+                'bolus': ['Insulin Delivered (U)'],
+                'cgm': ['CGM Glucose Value (mmol/l)']
+            }.get(file_type, [])
+
+            for col in numeric_columns:
+                if col in df.columns:
+                    df[col] = pd.to_numeric(df[col], errors='coerce')
+                    df = df.dropna(subset=[col])
+
+            logger.info(f"Processed {len(df)} records for {file_type}")
+            return df
+
+        logger.error(f"No data found in {file_type} file")
         return None
-        
+
     except Exception as e:
         logger.error(f"Error processing {file_type} file: {str(e)}")
         return None
@@ -86,7 +109,6 @@ def post_data():
                     file_type = 'alarms'
 
                 if file_type:
-                    # Zpracování CSV
                     df = process_csv_file(file, file_type)
                     if df is not None and not df.empty:
                         # Konverze na seznam slovníků
@@ -99,12 +121,14 @@ def post_data():
                                     record[column] = None
                                 elif isinstance(value, (np.int64, np.float64)):
                                     record[column] = float(value)
+                                elif isinstance(value, pd.Timestamp):
+                                    record[column] = value.isoformat()
                                 else:
                                     record[column] = str(value)
                             records.append(record)
                         
                         result_dict[file_type].extend(records)
-                        logger.info(f"Successfully processed {len(records)} records for {file_type}")
+                        logger.info(f"Added {len(records)} records for {file_type}")
                     else:
                         logger.warning(f"No valid data found in {file.filename}")
 
@@ -112,9 +136,11 @@ def post_data():
                 logger.error(f"Error processing file {file.filename}: {str(e)}")
                 return jsonify({"error": f"Error processing file {file.filename}: {str(e)}"}), 500
 
-        # Log počtu záznamů
+        # Log počtu záznamů pro každý typ dat
         for key, records in result_dict.items():
             logger.info(f"{key}: {len(records)} records")
+            if records:
+                logger.debug(f"Sample {key} record: {records[0]}")
 
         return jsonify({
             "message": "Data successfully processed",

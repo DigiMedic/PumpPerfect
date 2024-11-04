@@ -1,163 +1,92 @@
-# DigiHealth Analytics - Analýza dat z inzulínové pumpy
+# DigiHealth Analytics
 
-Webová aplikace pro komplexní analýzu a vizualizaci dat z inzulínových pump a kontinuálního monitoringu glukózy (CGM).
+## Instalace a spuštění
 
-## Funkce
+### Prerekvizity
+- Python 3.12+
+- Node.js 18+
+- npm nebo yarn
 
-### Analýza glykémií
-- Průměrná glykémie a GMI (Glucose Management Indicator)
-- Čas v cílovém rozmezí (Time in Range)
-- Variabilita glukózy (CV - Coefficient of Variation)
-- Detekce a analýza hypoglykémií
-
-### Analýza inzulínu
-- Denní profily bazálního a bolusového inzulínu
-- Citlivost na inzulín
-- Analýza vztahu mezi bolusy a hypoglykémiemi
-- Hodinové statistiky dávkování
-
-### Vizualizace
-- Interaktivní grafy pomocí Recharts
-- Přehledné statistické karty
-- Časové filtry a různé typy zobrazení
-- Responzivní design pro všechna zařízení
-
-## Technologie
-
-### Frontend
-- Next.js 14
-- TypeScript
-- Tailwind CSS
-- shadcn/ui komponenty
-- Recharts pro grafy
-
-### Backend
-- Python/Flask
-- Pandas pro analýzu dat
-- NumPy pro statistické výpočty
-- Flask-CORS pro cross-origin požadavky
-
-## Instalace
-
-1. Klonování repozitáře:
+### Backend (Python/Flask)
 ```bash
-git clone https://github.com/yourusername/digihealth.git
-cd digihealth
-```
+# Vytvoření virtuálního prostředí
+python -m venv venv
 
-2. Instalace frontend závislostí:
-```bash
-npm install
-```
+# Aktivace virtuálního prostředí
+# Windows:
+venv\Scripts\activate
+# macOS/Linux:
+source venv/bin/activate
 
-3. Instalace backend závislostí:
-```bash
+# Instalace závislostí
 pip install -r requirements.txt
-```
 
-4. Vytvoření .env.local souboru:
-```env
-NEXT_PUBLIC_API_URL=http://localhost:5001
-```
-
-## Spuštění aplikace
-
-1. Spuštění backend serveru:
-```bash
+# Spuštění serveru
 python server.py
 ```
 
-2. Spuštění frontend development serveru:
+### Frontend (Next.js)
 ```bash
+# Instalace závislostí
+npm install
+
+# Spuštění vývojového serveru
 npm run dev
 ```
 
-Aplikace bude dostupná na `http://localhost:3000`
-
 ## Struktura projektu
-
 ```
 digihealth/
-├── app/
-│   ├── components/
-│   │   ├── analytics/
-│   │   │   ├── GlucoseMetricsCard.tsx
-│   │   │   ├── InsulinSensitivityChart.tsx
-│   │   │   ├── DailyProfile.tsx
-│   │   │   ├── HypoEventsTable.tsx
-│   │   │   └── StatisticsGrid.tsx
-│   │   ├── ui/
-│   │   │   ├── button.tsx
-│   │   │   ├── card.tsx
-│   │   │   ├── select.tsx
-│   │   │   └── tabs.tsx
-│   │   ├── Dashboard.tsx
-│   │   ├── FileUploader.tsx
-│   │   └── PythonData.tsx
-│   ├── lib/
-│   │   ├── utils.ts
-│   │   └── analytics.ts
-│   └── types/
-│       └── index.ts
-├── server/
-│   └── server.py
-└── public/
-    └── assets/
+├── app/                    # Frontend aplikace
+│   ├── components/        # React komponenty
+│   ├── lib/              # Utility a helpers
+│   └── types/            # TypeScript typy
+├── server/               # Python backend
+├── public/              # Statické soubory
+└── docs/               # Dokumentace
 ```
 
-## Analytické funkce
+## Formát vstupních dat
 
-### Glykemické metriky
-- Průměrná glykémie
-- GMI (Glucose Management Indicator)
-- Čas v cílovém rozmezí (3.9-10.0 mmol/L)
-- Koeficient variace (CV)
-- Počet a analýza hypoglykémií
+### Požadované CSV soubory
+- `basal_data.csv`: Bazální dávky inzulínu
+- `bolus_data.csv`: Bolusové dávky inzulínu
+- `cgm_data.csv`: Data z CGM
 
-### Inzulínové metriky
-- Hodinové mediány bazálních a bolusových dávek
-- Citlivost na inzulín (ISF)
-- Analýza vztahu mezi bolusy a hypoglykémiemi
-- Denní vzorce dávkování
+### Struktura CSV souborů
+Všechny soubory musí obsahovat:
+1. První řádek: metadata (přeskočeno)
+2. Druhý řádek: hlavičky sloupců
+3. Od třetího řádku: data
 
-## Konfigurace
+#### Povinné sloupce:
+- basal_data.csv: Timestamp, Rate
+- bolus_data.csv: Timestamp, Insulin Delivered (U)
+- cgm_data.csv: Timestamp, CGM Glucose Value (mmol/l)
 
-Aplikace používá následující konfigurační parametry:
+## Řešení problémů
 
-```python
-HYPO_THRESHOLD = 3.9  # hranice hypoglykémie v mmol/L
-HYPER_THRESHOLD = 10.0  # hranice hyperglykémie v mmol/L
-TIME_WINDOW = 2  # časové okno pro analýzu po bolusu (hodiny)
-```
+### Backend
+1. Kontrola logů v konzoli serveru
+2. Ověření formátu CSV souborů
+3. Kontrola časových značek
+
+### Frontend
+1. Kontrola Network tabu v DevTools
+2. Ověření dat v konzoli prohlížeče
+3. Kontrola React DevTools
 
 ## Vývoj
 
-Pro přidání nové funkcionality:
-
-1. Vytvořte novou větev
-2. Implementujte změny
-3. Přidejte testy
-4. Vytvořte pull request
-
-## Testování
-
+### Backend
 ```bash
-# Frontend testy
-npm test
-
-# Backend testy
-python -m pytest
+# Aktivace debug módu
+export FLASK_DEBUG=1
+python server.py
 ```
 
-## Licence
-
-Distribuováno pod MIT licencí. Viz `LICENSE` pro více informací.
-
-## Autoři
-
-- Jméno Autora (@github_username)
-
-## Kontakt
-
-Email - email@example.com
-Project Link: https://github.com/yourusername/digihealth
+### Frontend
+```bash
+# Spuštění s debugováním
+npm run dev
+```

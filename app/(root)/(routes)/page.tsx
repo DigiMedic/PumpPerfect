@@ -1,16 +1,24 @@
 'use client';
 
 import Dashboard from "@/app/components/Dashboard";
+import { PageContainer } from "@/components/ui/page-container";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default function Home() {
   return (
-    <div className="flex flex-col min-h-screen">
-      <header className="border-b">
-        <div className="container py-4">
-          <h1 className="text-2xl font-bold">DigiHealth Analytics</h1>
-        </div>
-      </header>
-      <Dashboard />
-    </div>
+    <PageContainer>
+      <PageHeader
+        heading="DigiHealth Analytics"
+        text="Komplexní analýza dat z inzulínové pumpy a CGM"
+      >
+        <p className="text-sm text-muted-foreground">
+          Nahrajte CSV soubory z vaší inzulínové pumpy pro detailní analýzu a vizualizaci dat.
+          Podporované formáty: basal_data.csv, bolus_data.csv, cgm_data.csv
+        </p>
+      </PageHeader>
+      <div className="grid gap-4">
+        <Dashboard />
+      </div>
+    </PageContainer>
   );
 }
