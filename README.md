@@ -6,6 +6,9 @@
 - Python 3.12+
 - Node.js 18+
 - npm nebo yarn
+- Supabase (viditelné v `app/lib/supabase.ts`)
+- Flask-CORS (viditelné v `server.py`)
+- pandas a numpy (viditelné v `server.py`)
 
 ### Backend (Python/Flask)
 ```bash
