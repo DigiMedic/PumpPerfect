@@ -5,10 +5,25 @@ DigiHealth Analytics je aplikace pro analýzu dat z inzulinové pumpy a CGM senz
 ## Instalace a spuštění
 
 ### Prerekvizity
-- Python 3.12+
-- Node.js 18+
-- npm nebo yarn
-- Redis server
+- Docker
+- Docker Compose
+
+### Nasazení pomocí Dockeru
+
+1. Klonování repozitáře:
+```bash
+git clone <repository-url>
+cd insulin-data-analysis
+```
+
+2. Spuštění kontejnerů:
+```bash
+docker-compose up --build
+```
+
+Aplikace bude dostupná na:
+- Backend: `http://localhost:8000`
+- Frontend: `http://localhost:3000`
 
 ### Backend (Python/Flask)
 ```bash
