@@ -7,12 +7,9 @@ export interface DataRecord {
 }
 
 export interface ProcessedData {
-    basal: BasalRecord[];
-    bolus: BolusRecord[];
-    cgm: CGMRecord[];
-    insulin?: InsulinRecord[];
-    alarms?: AlarmRecord[];
-    bg?: BGRecord[];
+    basal: any[];
+    bolus: any[];
+    cgm: any[];
 }
 
 export interface BasalRecord {
@@ -127,3 +124,23 @@ export const isValidProcessedData = (data: any): data is ProcessedData => {
 
     return hasValidBasal && hasValidBolus && hasValidCGM;
 };
+
+// Přidáme chybějící rozhraní
+export interface InsulinSensitivity {
+    time: string;
+    insulin_amount: number;
+    glucose_drop: number;
+    sensitivity: number;
+}
+
+export interface PumpUsageData {
+    dailyScores: {
+        date: string;
+        score: number;
+        hypos: number;
+        manualAdjustments: number;
+        delayedBoluses: number;
+    }[];
+    riskLevel: 'low' | 'medium' | 'high';
+    totalScore: number;
+}

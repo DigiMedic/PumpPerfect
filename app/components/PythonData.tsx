@@ -5,6 +5,7 @@ import { AnalyticsDashboard } from "./analytics/AnalyticsDashboard";
 import { ProcessedData, AnalyticsResult } from "@/types";
 import { analyzeData } from "@/lib/analytics";
 import { Loading } from "@/components/ui/loading";
+import { useToast } from "@/components/ui/use-toast";
 
 interface PythonDataProps {
     data: ProcessedData;
@@ -14,6 +15,7 @@ interface PythonDataProps {
 export default function PythonData({ data, onReset }: PythonDataProps) {
     const [analysisResults, setAnalysisResults] = useState<AnalyticsResult | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const { toast } = useToast();
 
     useEffect(() => {
         console.log('Initial data received:', data);
@@ -26,6 +28,11 @@ export default function PythonData({ data, onReset }: PythonDataProps) {
                 setAnalysisResults(results);
             } catch (error) {
                 console.error('Error analyzing data:', error);
+                toast({
+                    title: "Chyba",
+                    description: error instanceof Error ? error.message : "Neočekávaná chyba při analýze dat",
+                    variant: "destructive",
+                });
             } finally {
                 setIsLoading(false);
             }

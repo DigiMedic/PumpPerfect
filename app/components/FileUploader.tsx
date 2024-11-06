@@ -1,12 +1,21 @@
-import React, { useState, useCallback } from 'react';
-import { useDropzone } from 'react-dropzone';
+import React, { useState, useCallback, useEffect } from 'react';
+import { useDropzone, DropzoneOptions } from 'react-dropzone';
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileIcon, FolderIcon } from "lucide-react";
+import { api } from '@/lib/api';
 
 interface FileUploaderProps {
     onUploadStatus: (status: string, data?: any) => void;
+}
+
+// Rozšíření typů pro HTML input element
+declare module 'react' {
+    interface InputHTMLAttributes<T> extends HTMLAttributes<T> {
+        webkitdirectory?: string;
+        directory?: string;
+    }
 }
 
 const FileUploader: React.FC<FileUploaderProps> = ({ onUploadStatus }) => {
@@ -25,9 +34,8 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onUploadStatus }) => {
         },
         multiple: true,
         useFsAccessApi: false,
-        webkitdirectory: true,
         noClick: false
-    });
+    } as DropzoneOptions);
 
     const handleFolderSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
@@ -50,48 +58,40 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onUploadStatus }) => {
         onUploadStatus('uploading', selectedFiles);
 
         try {
-            const formData = new FormData();
-            selectedFiles.forEach((file) => {
-                formData.append('file', file);
-            });
-
-            console.log('Uploading files:', selectedFiles.map(f => f.name));
-
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/post_data`, {
-                method: 'POST',
-                body: formData,
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            console.log('Server response:', data);
-
-            if (data.error) {
-                throw new Error(data.error);
-            }
-
-            if (!data.processed_data) {
-                throw new Error('Server nevrátil zpracovaná data');
-            }
-
-            if (!data.processed_data.basal || 
-                !data.processed_data.bolus || 
-                !data.processed_data.cgm) {
-                throw new Error('Neplatná struktura dat ze serveru');
-            }
-
-            onUploadStatus('finished', data);
+            const response = await api.uploadFiles(selectedFiles);
+            console.log('Server response:', response);
+            onUploadStatus('finished', response);
             setSelectedFiles([]);
-        } catch (error) {
+            
+        } catch (error: unknown) {
             console.error('Upload error:', error);
-            onUploadStatus('error', { error: error.message });
+            const errorMessage = error instanceof Error ? error.message : 'Neznámá chyba';
+            onUploadStatus('error', { error: errorMessage });
+            toast({
+                title: "Chyba při nahrávání",
+                description: errorMessage,
+                variant: "destructive"
+            });
         } finally {
             setIsUploading(false);
         }
     };
+
+    const testConnection = async () => {
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/test`, {
+                method: 'GET',
+                mode: 'cors'
+            });
+            console.log('Test response:', await response.json());
+        } catch (error) {
+            console.error('Test failed:', error);
+        }
+    };
+
+    useEffect(() => {
+        testConnection();
+    }, []);
 
     return (
         <div className="space-y-6">

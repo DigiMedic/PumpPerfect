@@ -1,4 +1,4 @@
-#!/Users/petrsovadina/Desktop/develope/Hackathon/digihealth/venv/bin/python
+#!/Users/petrsovadina/Desktop/develope/Hackathon/digihealth/venv/bin/python3.10
 # -*- coding: utf-8 -*-
 import re
 import sys

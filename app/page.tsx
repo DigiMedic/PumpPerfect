@@ -8,7 +8,7 @@ import DotPattern from '@/components/ui/dot-pattern';
 export default function HomePage() {
   return (
     <MarketingLayout>
-      <div className="relative flex flex-col items-center justify-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 mt-40 text-center">
+      <div className="relative flex flex-col items-center justify-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 mt-24 text-center">
         <DotPattern
           width={20}
           height={20}

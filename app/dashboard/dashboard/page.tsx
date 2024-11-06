@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/ui/page-header";
 
 export default function DashboardPage() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col pt-6">
       <main className="flex-1">
         <PageContainer>
           <PageHeader

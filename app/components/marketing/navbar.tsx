@@ -4,14 +4,14 @@ import { Button } from "@/components/ui/button";
 
 export function MarketingNavbar() {
   return (
-    <div className="fixed top-0 w-full h-40 px-4 border-b border-white/10 bg-transparent backdrop-blur-sm flex items-center z-50">
+    <div className="fixed top-0 w-full h-24 px-4 border-b border-white/10 bg-transparent backdrop-blur-sm flex items-center z-50">
       <div className="md:max-w-screen-2xl mx-auto flex items-center w-full justify-between">
         <Link href="/" className="flex items-center">
           <Image
             src="https://utfs.io/f/NyKlEsePJFL1HonJehGAgPkir8dMbloHhyK92GYzULftnpcB"
             alt="DigiMedic Logo"
-            width={160}
-            height={160}
+            width={140}
+            height={140}
             className="object-contain"
           />
         </Link>
