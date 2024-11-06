@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/mydatabase
+      - REDIS_URL=redis://db:6379
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DEBUG=True
+      - SECRET_KEY=development-secret-key
+      - ALGORITHM=HS256
+      - ACCESS_TOKEN_EXPIRE_MINUTES=30
+      - MAX_UPLOAD_SIZE=10485760
+      - ALLOWED_EXTENSIONS=.csv
+      - ALLOWED_ORIGINS=["http://localhost:3000"]
+    depends_on:
+      - db
+      - redis
+
+  frontend:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    volumes:
+      - ./app:/app
+    ports:
+      - "3000:3000"
+
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydatabase
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+
+volumes:
+  db_data:
