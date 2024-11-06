@@ -7,8 +7,8 @@ import { cn } from "@/lib/utils";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "DigiHealth Analytics | Analýza dat z inzulínové pumpy",
-  description: "Komplexní analýza a vizualizace dat z inzulínových pump a CGM systémů",
+  title: "DigiHealth Analytics",
+  description: "...",
   keywords: ["diabetes", "analýza dat", "inzulínová pumpa", "CGM", "glykémie"],
 };
 
