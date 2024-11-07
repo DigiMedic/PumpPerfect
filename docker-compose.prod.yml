@@ -3,16 +3,15 @@ version: '3.8'
 services:
   frontend:
     build:
-      context: ./app
-      target: production
-    container_name: digimedic-frontend-prod
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
     env_file:
       - .env.production
-    restart: unless-stopped
     networks:
       - digimedic-network
 
