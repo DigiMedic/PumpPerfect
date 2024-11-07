@@ -73,3 +73,13 @@ async def options_handler(request: Request):
             "Access-Control-Allow-Headers": "*"
         }
     )
+
+# Přidání endpointu pro GET /
+@app.get("/")
+def read_root():
+    return {"message": "Aplikace běží správně."}
+
+# Přidání endpointu pro GET /favicon.ico
+@app.get("/favicon.ico")
+async def favicon():
+    return {"message": "Favicon not found"}
