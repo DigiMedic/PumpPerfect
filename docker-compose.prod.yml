@@ -4,36 +4,33 @@ services:
   frontend:
     build:
       context: ./app
-      target: development
-    container_name: digimedic-frontend-dev
+      target: production
+    container_name: digimedic-frontend-prod
     ports:
       - "3000:3000"
-    volumes:
-      - ./app:/app
-      - /app/node_modules
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
     env_file:
-      - .env
+      - .env.production
+    restart: unless-stopped
     networks:
       - digimedic-network
 
   backend:
     build:
       context: ./backend
-      target: development
-    container_name: digimedic-backend-dev
+      target: production
+    container_name: digimedic-backend-prod
     ports:
       - "8000:8000"
-    volumes:
-      - ./backend:/app
     environment:
       - PYTHONUNBUFFERED=1
     env_file:
-      - .env
+      - .env.production
+    restart: unless-stopped
     networks:
       - digimedic-network
 
 networks:
   digimedic-network:
-    driver: bridge
+    driver: bridge 
