@@ -3,37 +3,42 @@ version: '3.8'
 services:
   frontend:
     build:
-      context: ./app
-      target: development
-    container_name: digimedic-frontend-dev
+      context: ./frontend
+      dockerfile: Dockerfile
     ports:
       - "3000:3000"
     volumes:
-      - ./app:/app
+      - ./frontend:/app
       - /app/node_modules
     environment:
       - NODE_ENV=development
-    env_file:
-      - .env
-    networks:
-      - digimedic-network
+      - NEXT_PUBLIC_API_URL=http://backend:8000
+    depends_on:
+      - backend
 
   backend:
     build:
       context: ./backend
-      target: development
-    container_name: digimedic-backend-dev
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
     volumes:
       - ./backend:/app
     environment:
-      - PYTHONUNBUFFERED=1
-    env_file:
-      - .env
-    networks:
-      - digimedic-network
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - REDIS_HOST=redis
+      - DEBUG=True
+    depends_on:
+      - redis
 
-networks:
-  digimedic-network:
-    driver: bridge
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+volumes:
+  redis_data:

@@ -1,36 +1,44 @@
-FROM python:3.11-slim as base
+# Stage 1: Builder
+FROM python:3.11-slim-buster as builder
 
-# Produkční build
-FROM base as production
+# Nastavení pracovního adresáře
 WORKDIR /app
 
-# Instalace systémových závislostí
-RUN apt-get update && apt-get install -y \
-    gcc \
+# Instalace build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Kopírování a instalace Python závislostí
+# Kopírování requirements
 COPY requirements.txt .
+
+# Vytvoření virtualenv a instalace dependencies
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Stage 2: Final
+FROM python:3.11-slim-buster
+
+# Kopírování virtualenv z builder stage
+COPY --from=builder /opt/venv /opt/venv
+
+# Nastavení pracovního adresáře
+WORKDIR /app
+
+# Nastavení PATH pro virtualenv
+ENV PATH="/opt/venv/bin:$PATH"
 
 # Kopírování zdrojového kódu
-COPY . .
+COPY src/ ./src/
 
+# Vytvoření neprivilegovaného uživatele
+RUN useradd -m -u 1000 appuser && \
+    chown -R appuser:appuser /app
+USER appuser
+
+# Expose port
 EXPOSE 8000
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
-
-# Vývojový build
-FROM base as development
-WORKDIR /app
-
-RUN apt-get update && apt-get install -y \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
-
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-EXPOSE 8000
-
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"] 
+# Spuštění aplikace
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
